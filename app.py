@@ -191,14 +191,16 @@ class PromptEditDialog(QDialog):
 
         buttons = QDialogButtonBox()
         save_btn = buttons.addButton(
-            "수정 저장" if is_edit else "추가하기", QDialogButtonBox.AcceptRole
+            "수정 내용 저장" if is_edit else "새 프롬프트 추가하기",
+            QDialogButtonBox.AcceptRole,
         )
-        cancel_btn = buttons.addButton("취소", QDialogButtonBox.RejectRole)
+        buttons.addButton("취소", QDialogButtonBox.RejectRole)
         save_btn.setObjectName("primary")
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self._try_accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+        self._result: dict | None = None
         if prompt:
             self.title_edit.setText(prompt.get("title", ""))
             cat = prompt.get("category", "기타")
@@ -208,6 +210,13 @@ class PromptEditDialog(QDialog):
             else:
                 self.category_combo.setEditText(cat)
             self.content_edit.setPlainText(prompt.get("content", ""))
+
+    def _try_accept(self) -> None:
+        data = self.get_data()
+        if data is None:
+            return
+        self._result = data
+        self.accept()
 
     def get_data(self) -> dict | None:
         title = self.title_edit.text().strip()
@@ -221,6 +230,9 @@ class PromptEditDialog(QDialog):
             )
             return None
         return {"title": title, "content": content, "category": category}
+
+    def result_data(self) -> dict | None:
+        return self._result
 
 
 class PromptManagerWindow(QMainWindow):
@@ -463,13 +475,17 @@ class PromptManagerWindow(QMainWindow):
         self.list_widget.blockSignals(False)
 
         mode_label = {
-            "all": "전체",
-            "favorites": "즐겨찾기",
-            "category": f"카테고리:{self._filter_category}",
-            "search": f"검색:{self._search_keyword}",
-            "top": "조회수 Top",
+            "all": "프롬프트 목록 (전체)",
+            "favorites": "즐겨찾기 목록",
+            "category": f"카테고리별 조회: {self._filter_category}",
+            "search": f"프롬프트 검색: {self._search_keyword}",
+            "top": "조회수 Top 목록",
         }.get(self._mode, self._mode)
-        self.count_label.setText(f"{len(self._view_indices)}개 표시  ·  전체 {len(core.prompts)}개  ·  {mode_label}")
+        self.count_label.setText(
+            f"지금 보이는 항목: {len(self._view_indices)}개  ·  "
+            f"전체 등록: {len(core.prompts)}개  ·  "
+            f"현재 보기: {mode_label}"
+        )
 
         # 선택 복원 (조회수 증가 없이 상세만 표시 — 시그널 차단)
         self.list_widget.blockSignals(True)
@@ -484,7 +500,9 @@ class PromptManagerWindow(QMainWindow):
             self._show_detail(self._view_indices[0], count_view=False)
         else:
             self.list_widget.blockSignals(False)
-            self.detail_meta.setText("표시할 프롬프트가 없습니다.")
+            self.detail_meta.setText(
+                "표시할 프롬프트가 없습니다. [프롬프트 추가] 또는 [프롬프트 목록 (전체)]를 사용해 보세요."
+            )
             self.detail_content.clear()
 
     def current_prompt_index(self) -> int | None:
@@ -531,44 +549,67 @@ class PromptManagerWindow(QMainWindow):
         self.category_filter.setCurrentIndex(0)
         self.category_filter.blockSignals(False)
         self.refresh_list()
-        self.statusBar().showMessage("전체 목록")
+        self.statusBar().showMessage(
+            f"프롬프트 목록 (전체) · {len(core.prompts)}개 표시"
+        )
 
     def show_favorites(self) -> None:
         self._mode = "favorites"
         self.refresh_list()
-        self.statusBar().showMessage("즐겨찾기 목록")
+        self.statusBar().showMessage(
+            f"즐겨찾기 목록 · {len(self._view_indices)}개 표시"
+        )
 
     def show_top(self) -> None:
         self._mode = "top"
         self.refresh_list()
-        self.statusBar().showMessage("조회수 Top 목록")
+        self.statusBar().showMessage(
+            f"조회수 Top 목록 · 조회수 높은 순 · {len(self._view_indices)}개"
+        )
 
     def on_category_filter(self) -> None:
         cat = self.category_filter.currentData()
         if cat is None:
             self._mode = "all"
             self._filter_category = None
+            self.refresh_list()
+            self.statusBar().showMessage("카테고리별 조회: 전체")
         else:
             self._mode = "category"
             self._filter_category = cat
-        self.refresh_list()
+            self.refresh_list()
+            self.statusBar().showMessage(
+                f"카테고리별 조회: {cat} · {len(self._view_indices)}개"
+            )
 
     def on_search(self) -> None:
         kw = self.search_edit.text().strip()
         if not kw:
-            self.show_all()
+            QMessageBox.information(
+                self,
+                "프롬프트 검색",
+                "검색어를 입력한 뒤 다시 [프롬프트 검색]을 눌러 주세요.",
+            )
             return
         self._mode = "search"
         self._search_keyword = kw
         self.refresh_list()
-        self.statusBar().showMessage(f"검색: {kw} → {len(self._view_indices)}건")
+        self.statusBar().showMessage(
+            f"프롬프트 검색: '{kw}' · 결과 {len(self._view_indices)}개"
+        )
+        if not self._view_indices:
+            QMessageBox.information(
+                self,
+                "프롬프트 검색",
+                f"'{kw}' 에 해당하는 프롬프트가 없습니다.",
+            )
 
     # ── CRUD ─────────────────────────────────────────
     def on_add(self) -> None:
         dlg = PromptEditDialog(self)
         if dlg.exec_() != QDialog.Accepted:
             return
-        data = dlg.get_data()
+        data = dlg.result_data()
         if not data:
             return
         core.prompts.append(
@@ -582,36 +623,44 @@ class PromptManagerWindow(QMainWindow):
         )
         self._mode = "all"
         self.refresh_list(keep_prompt_index=len(core.prompts) - 1)
-        self.statusBar().showMessage(f"추가됨: {data['title']}")
+        self.statusBar().showMessage(f"프롬프트 추가 완료: {data['title']}")
 
     def on_edit(self) -> None:
         idx = self.current_prompt_index()
         if idx is None:
-            QMessageBox.information(self, "알림", "수정할 항목을 선택하세요.")
+            QMessageBox.information(
+                self,
+                "프롬프트 수정",
+                "수정할 프롬프트를 왼쪽 목록에서 먼저 선택해 주세요.",
+            )
             return
         p = core.prompts[idx]
         dlg = PromptEditDialog(self, prompt=p)
         if dlg.exec_() != QDialog.Accepted:
             return
-        data = dlg.get_data()
+        data = dlg.result_data()
         if not data:
             return
         p["title"] = data["title"]
         p["content"] = data["content"]
         p["category"] = data["category"]
         self.refresh_list(keep_prompt_index=idx)
-        self.statusBar().showMessage(f"수정됨: {p['title']}")
+        self.statusBar().showMessage(f"프롬프트 수정 완료: {p['title']}")
 
     def on_delete(self) -> None:
         idx = self.current_prompt_index()
         if idx is None:
-            QMessageBox.information(self, "알림", "삭제할 항목을 선택하세요.")
+            QMessageBox.information(
+                self,
+                "프롬프트 삭제",
+                "삭제할 프롬프트를 왼쪽 목록에서 먼저 선택해 주세요.",
+            )
             return
         p = core.prompts[idx]
         reply = QMessageBox.question(
             self,
-            "삭제 확인",
-            f"'{p.get('title', '')}' 프롬프트를 삭제할까요?",
+            "프롬프트 삭제",
+            f"다음 프롬프트를 삭제할까요?\n\n「{p.get('title', '')}」\n\n삭제 후에는 되돌릴 수 없습니다.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -619,48 +668,75 @@ class PromptManagerWindow(QMainWindow):
             return
         removed = core.prompts.pop(idx)
         self.refresh_list()
-        self.statusBar().showMessage(f"삭제됨: {removed.get('title', '')}")
+        self.statusBar().showMessage(f"프롬프트 삭제 완료: {removed.get('title', '')}")
 
     def on_toggle_favorite(self) -> None:
         idx = self.current_prompt_index()
         if idx is None:
-            QMessageBox.information(self, "알림", "항목을 선택하세요.")
+            QMessageBox.information(
+                self,
+                "즐겨찾기 추가/해제",
+                "즐겨찾기를 바꿀 프롬프트를 왼쪽 목록에서 먼저 선택해 주세요.",
+            )
             return
         p = core.prompts[idx]
         p["favorite"] = not bool(p.get("favorite"))
-        state = "추가" if p["favorite"] else "해제"
+        state = "즐겨찾기에 추가" if p["favorite"] else "즐겨찾기에서 해제"
         self.refresh_list(keep_prompt_index=idx)
-        self.statusBar().showMessage(f"즐겨찾기 {state}: {p.get('title', '')}")
+        self.statusBar().showMessage(f"{state}: {p.get('title', '')}")
 
     # ── 영속화 ───────────────────────────────────────
     def on_save_json(self) -> None:
         path = _ROOT / core.DATA_FILE
         with open(path, "w", encoding="utf-8") as f:
             json.dump(core.prompts, f, ensure_ascii=False, indent=2)
-        self.statusBar().showMessage(f"저장 완료: {path.name} ({len(core.prompts)}개)")
-        QMessageBox.information(self, "JSON 저장", f"'{path.name}' 에 저장했습니다.")
+        self.statusBar().showMessage(
+            f"JSON으로 저장 완료: {path.name} ({len(core.prompts)}개)"
+        )
+        QMessageBox.information(
+            self,
+            "JSON으로 저장",
+            f"현재 프롬프트 {len(core.prompts)}개를\n'{path.name}' 파일로 저장했습니다.",
+        )
 
     def on_load_json(self) -> None:
         path = _ROOT / core.DATA_FILE
         if not path.exists():
-            QMessageBox.warning(self, "JSON 불러오기", f"'{path.name}' 파일이 없습니다.")
+            QMessageBox.warning(
+                self,
+                "JSON에서 불러오기",
+                f"'{path.name}' 파일이 없습니다.\n"
+                "먼저 [JSON으로 저장]을 한 번 실행해 주세요.",
+            )
             return
         with open(path, "r", encoding="utf-8") as f:
             loaded = json.load(f)
         if not isinstance(loaded, list):
-            QMessageBox.warning(self, "JSON 불러오기", "파일 형식이 올바르지 않습니다.")
+            QMessageBox.warning(
+                self,
+                "JSON에서 불러오기",
+                "파일 형식이 올바르지 않습니다. (리스트 형식이어야 합니다)",
+            )
             return
         core.prompts.clear()
         core.prompts.extend(loaded)
         self.show_all()
-        self.statusBar().showMessage(f"불러오기 완료: {len(core.prompts)}개")
+        self.statusBar().showMessage(
+            f"JSON에서 불러오기 완료: {len(core.prompts)}개"
+        )
         QMessageBox.information(
-            self, "JSON 불러오기", f"'{path.name}' 에서 {len(core.prompts)}개를 불러왔습니다."
+            self,
+            "JSON에서 불러오기",
+            f"'{path.name}' 에서 프롬프트 {len(core.prompts)}개를 불러왔습니다.",
         )
 
     def on_export_md(self) -> None:
         if not core.prompts:
-            QMessageBox.information(self, "Markdown 내보내기", "내보낼 프롬프트가 없습니다.")
+            QMessageBox.information(
+                self,
+                "Markdown 파일로 내보내기",
+                "내보낼 프롬프트가 없습니다.",
+            )
             return
         export_dir = _ROOT / core.EXPORT_DIR
         export_dir.mkdir(exist_ok=True)
@@ -673,12 +749,16 @@ class PromptManagerWindow(QMainWindow):
                 f.write(f"# {category}\n\n")
                 for p in items:
                     star = "★" if p.get("favorite") else "☆"
-                    f.write(f"## {p.get('title', '')} {star}\n\n{p.get('content', '')}\n\n")
-        self.statusBar().showMessage(f"Markdown 내보내기 완료: {export_dir}/")
+                    f.write(
+                        f"## {p.get('title', '')} {star}\n\n{p.get('content', '')}\n\n"
+                    )
+        self.statusBar().showMessage(
+            f"Markdown 파일로 내보내기 완료: {export_dir}/"
+        )
         QMessageBox.information(
             self,
-            "Markdown 내보내기",
-            f"'{core.EXPORT_DIR}/' 폴더에 카테고리별 .md 파일을 만들었습니다.",
+            "Markdown 파일로 내보내기",
+            f"카테고리별 Markdown 파일을 만들었습니다.\n\n폴더: {core.EXPORT_DIR}/",
         )
 
 
