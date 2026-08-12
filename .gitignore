@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime / export
+prompts.json
+exports/
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local reference (past missions — not submitted)
+other/
+_rebuild_stages/
