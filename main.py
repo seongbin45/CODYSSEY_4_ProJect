@@ -190,5 +190,31 @@ def show_favorites():
     print(f"총 {len(favorites)}개의 즐겨찾기")
 
 
+def main():
+    while True:
+        show_menu()
+        choice = input("선택: ").strip()
+
+        if choice == "1":
+            add_prompt()
+        elif choice == "2":
+            print("목록 기능은 feature/show-list 브랜치에서 구현 예정입니다.")
+        elif choice == "3":
+            show_by_category()
+        elif choice == "4":
+            search_prompt()
+        elif choice == "5":
+            show_detail()
+        elif choice == "6":
+            toggle_favorite()
+        elif choice == "7":
+            show_favorites()
+        elif choice == "0":
+            print("프로그램을 종료합니다.")
+            break
+        else:
+            print("잘못된 번호입니다. 다시 입력해주세요.")
+
+
 if __name__ == "__main__":
-    show_menu()
+    main()
