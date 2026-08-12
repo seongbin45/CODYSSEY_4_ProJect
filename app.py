@@ -165,7 +165,8 @@ class PromptEditDialog(QDialog):
 
     def __init__(self, parent=None, prompt: dict | None = None, categories: list[str] | None = None):
         super().__init__(parent)
-        self.setWindowTitle("프롬프트 수정" if prompt else "프롬프트 추가")
+        is_edit = prompt is not None
+        self.setWindowTitle("프롬프트 수정" if is_edit else "프롬프트 추가")
         self.resize(560, 480)
         self._categories = categories or list(core.CATEGORIES)
 
@@ -173,21 +174,27 @@ class PromptEditDialog(QDialog):
         form = QFormLayout()
 
         self.title_edit = QLineEdit()
-        self.title_edit.setPlaceholderText("제목")
-        form.addRow("제목", self.title_edit)
+        self.title_edit.setPlaceholderText("예: 블로그 초안 작성 도우미")
+        form.addRow("제목 *", self.title_edit)
 
         self.category_combo = QComboBox()
         self.category_combo.setEditable(True)
         self.category_combo.addItems(self._categories)
-        form.addRow("카테고리", self.category_combo)
+        self.category_combo.setToolTip("목록에서 고르거나, 직접 새 카테고리 이름을 입력할 수 있습니다.")
+        form.addRow("카테고리 *", self.category_combo)
 
         self.content_edit = QTextEdit()
-        self.content_edit.setPlaceholderText("프롬프트 내용")
-        form.addRow("내용", self.content_edit)
+        self.content_edit.setPlaceholderText("프롬프트 본문 전체를 입력하세요.")
+        form.addRow("내용 *", self.content_edit)
 
         layout.addLayout(form)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox()
+        save_btn = buttons.addButton(
+            "수정 저장" if is_edit else "추가하기", QDialogButtonBox.AcceptRole
+        )
+        cancel_btn = buttons.addButton("취소", QDialogButtonBox.RejectRole)
+        save_btn.setObjectName("primary")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -207,7 +214,11 @@ class PromptEditDialog(QDialog):
         content = self.content_edit.toPlainText().strip()
         category = self.category_combo.currentText().strip() or "기타"
         if not title or not content:
-            QMessageBox.warning(self, "입력 오류", "제목과 내용은 비울 수 없습니다.")
+            QMessageBox.warning(
+                self,
+                "입력 확인",
+                "제목과 내용은 비워 둘 수 없습니다.\n필수 항목(*)을 모두 입력해 주세요.",
+            )
             return None
         return {"title": title, "content": content, "category": category}
 
@@ -215,9 +226,9 @@ class PromptEditDialog(QDialog):
 class PromptManagerWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("나만의 프롬프트 관리 (PyQt)")
-        self.resize(1100, 700)
-        self.setMinimumSize(860, 560)
+        self.setWindowTitle("나만의 프롬프트 관리 프로그램")
+        self.resize(1180, 740)
+        self.setMinimumSize(960, 600)
 
         # 필터 상태: all | favorites | category | search | top
         self._mode = "all"
@@ -229,7 +240,8 @@ class PromptManagerWindow(QMainWindow):
         self._bind_shortcuts()
         self.refresh_list()
         self.statusBar().showMessage(
-            f"준비 완료 · 기본 프롬프트 {len(core.prompts)}개 · VS Code에서 app.py 실행"
+            f"준비 완료 · 기본 등록 프롬프트 {len(core.prompts)}개 · "
+            "왼쪽 목록을 클릭하면 상세 내용을 볼 수 있습니다."
         )
 
     # ── UI ───────────────────────────────────────────
@@ -243,40 +255,53 @@ class PromptManagerWindow(QMainWindow):
         header = QVBoxLayout()
         title = QLabel("나만의 프롬프트 관리")
         title.setObjectName("title")
-        subtitle = QLabel("평가자용 GUI · app.py 만 실행하면 됩니다  ·  데이터는 main.py 와 공유")
+        subtitle = QLabel(
+            "평가자용 화면 · VS Code에서 app.py 만 실행하면 됩니다  ·  "
+            "아래 버튼 이름 = 실제 기능 이름"
+        )
         subtitle.setObjectName("subtitle")
         header.addWidget(title)
         header.addWidget(subtitle)
         outer.addLayout(header)
 
-        # 검색 / 필터 줄
+        # 검색 / 조회 줄 (콘솔 메뉴 2·3·4·7·9 대응)
         filter_row = QHBoxLayout()
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("제목·내용 검색 (Enter)")
+        self.search_edit.setPlaceholderText(
+            "검색어 입력 후 [프롬프트 검색] 클릭 또는 Enter"
+        )
+        self.search_edit.setToolTip("제목 또는 내용에 포함된 단어로 찾습니다. (메뉴 4)")
         self.search_edit.returnPressed.connect(self.on_search)
         filter_row.addWidget(self.search_edit, 3)
 
         self.category_filter = QComboBox()
-        self.category_filter.addItem("전체 카테고리", None)
+        self.category_filter.addItem("카테고리별 조회: 전체", None)
         for c in core.CATEGORIES:
-            self.category_filter.addItem(c, c)
+            self.category_filter.addItem(f"카테고리별 조회: {c}", c)
+        self.category_filter.setToolTip(
+            "카테고리를 고르면 해당 분류 프롬프트만 목록에 표시합니다. (메뉴 3)"
+        )
         self.category_filter.currentIndexChanged.connect(self.on_category_filter)
-        filter_row.addWidget(self.category_filter, 1)
+        filter_row.addWidget(self.category_filter, 2)
 
-        btn_search = QPushButton("검색")
+        btn_search = QPushButton("프롬프트 검색")
         btn_search.setObjectName("primary")
+        btn_search.setToolTip("입력한 검색어로 제목·내용을 검색합니다. (메뉴 4)")
         btn_search.clicked.connect(self.on_search)
         filter_row.addWidget(btn_search)
 
-        btn_all = QPushButton("전체")
+        btn_all = QPushButton("프롬프트 목록 (전체)")
+        btn_all.setToolTip("등록된 모든 프롬프트를 다시 보여 줍니다. (메뉴 2)")
         btn_all.clicked.connect(self.show_all)
         filter_row.addWidget(btn_all)
 
-        btn_fav = QPushButton("★ 즐겨찾기")
+        btn_fav = QPushButton("즐겨찾기 목록")
+        btn_fav.setToolTip("즐겨찾기로 표시한 프롬프트만 모아서 봅니다. (메뉴 7)")
         btn_fav.clicked.connect(self.show_favorites)
         filter_row.addWidget(btn_fav)
 
-        btn_top = QPushButton("조회수 Top")
+        btn_top = QPushButton("조회수 Top 목록")
+        btn_top.setToolTip("상세 보기를 많이 한 순서(조회수 높은 순)로 정렬합니다. (메뉴 9)")
         btn_top.clicked.connect(self.show_top)
         filter_row.addWidget(btn_top)
 
@@ -288,8 +313,12 @@ class PromptManagerWindow(QMainWindow):
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
+        list_caption = QLabel("프롬프트 목록 — 항목을 클릭하면 오른쪽에서 상세 보기")
+        list_caption.setObjectName("subtitle")
+        left_layout.addWidget(list_caption)
         self.list_widget = QListWidget()
         self.list_widget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.list_widget.setToolTip("한 줄을 클릭하면 상세 보기(메뉴 5)가 열리고 조회수가 1 증가합니다.")
         self.list_widget.currentRowChanged.connect(self.on_select)
         left_layout.addWidget(self.list_widget)
         self.count_label = QLabel("0개")
@@ -302,51 +331,83 @@ class PromptManagerWindow(QMainWindow):
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.detail_meta = QLabel("항목을 선택하세요")
+        detail_caption = QLabel("프롬프트 상세 보기")
+        detail_caption.setObjectName("subtitle")
+        right_layout.addWidget(detail_caption)
+
+        self.detail_meta = QLabel("왼쪽 목록에서 프롬프트를 선택하세요.")
         self.detail_meta.setObjectName("subtitle")
         self.detail_meta.setWordWrap(True)
         right_layout.addWidget(self.detail_meta)
 
         self.detail_content = QTextEdit()
         self.detail_content.setReadOnly(True)
-        self.detail_content.setPlaceholderText("선택한 프롬프트 내용이 여기에 표시됩니다.")
+        self.detail_content.setPlaceholderText(
+            "선택한 프롬프트의 전체 내용이 여기에 표시됩니다. (메뉴 5: 상세 보기)"
+        )
         right_layout.addWidget(self.detail_content, 1)
 
-        # 액션 버튼
-        actions = QHBoxLayout()
-        self.btn_add = QPushButton("추가")
+        # 관리 버튼 1행 — 메뉴 1, 6, 8
+        manage_row = QHBoxLayout()
+        manage_hint = QLabel("선택 항목 관리:")
+        manage_hint.setObjectName("subtitle")
+        manage_row.addWidget(manage_hint)
+
+        self.btn_add = QPushButton("프롬프트 추가")
         self.btn_add.setObjectName("primary")
+        self.btn_add.setToolTip("새 프롬프트를 등록합니다. (메뉴 1)")
         self.btn_add.clicked.connect(self.on_add)
-        actions.addWidget(self.btn_add)
+        manage_row.addWidget(self.btn_add)
 
-        self.btn_edit = QPushButton("수정")
+        self.btn_edit = QPushButton("프롬프트 수정")
+        self.btn_edit.setToolTip("선택한 프롬프트의 제목·내용·카테고리를 고칩니다. (메뉴 8)")
         self.btn_edit.clicked.connect(self.on_edit)
-        actions.addWidget(self.btn_edit)
+        manage_row.addWidget(self.btn_edit)
 
-        self.btn_del = QPushButton("삭제")
+        self.btn_del = QPushButton("프롬프트 삭제")
         self.btn_del.setObjectName("danger")
+        self.btn_del.setToolTip("선택한 프롬프트를 목록에서 제거합니다. (메뉴 8)")
         self.btn_del.clicked.connect(self.on_delete)
-        actions.addWidget(self.btn_del)
+        manage_row.addWidget(self.btn_del)
 
-        self.btn_star = QPushButton("★ 즐겨찾기 토글")
+        self.btn_star = QPushButton("즐겨찾기 추가/해제")
+        self.btn_star.setToolTip(
+            "선택한 프롬프트를 즐겨찾기에 넣거나 빼니다. (메뉴 6: 즐겨찾기 관리)"
+        )
         self.btn_star.clicked.connect(self.on_toggle_favorite)
-        actions.addWidget(self.btn_star)
+        manage_row.addWidget(self.btn_star)
+        manage_row.addStretch(1)
+        right_layout.addLayout(manage_row)
 
-        actions.addStretch(1)
+        # 파일 버튼 2행 — 메뉴 10, 11, 12
+        file_row = QHBoxLayout()
+        file_hint = QLabel("파일 저장·불러오기:")
+        file_hint.setObjectName("subtitle")
+        file_row.addWidget(file_hint)
 
-        self.btn_save = QPushButton("JSON 저장")
+        self.btn_save = QPushButton("JSON으로 저장")
+        self.btn_save.setToolTip(
+            f"현재 프롬프트 전체를 '{core.DATA_FILE}' 파일로 저장합니다. (메뉴 10)"
+        )
         self.btn_save.clicked.connect(self.on_save_json)
-        actions.addWidget(self.btn_save)
+        file_row.addWidget(self.btn_save)
 
-        self.btn_load = QPushButton("JSON 불러오기")
+        self.btn_load = QPushButton("JSON에서 불러오기")
+        self.btn_load.setToolTip(
+            f"'{core.DATA_FILE}' 파일을 읽어 목록을 복원합니다. (메뉴 11)"
+        )
         self.btn_load.clicked.connect(self.on_load_json)
-        actions.addWidget(self.btn_load)
+        file_row.addWidget(self.btn_load)
 
-        self.btn_export = QPushButton("MD 내보내기")
+        self.btn_export = QPushButton("Markdown 파일로 내보내기")
+        self.btn_export.setToolTip(
+            f"카테고리별 .md 파일을 '{core.EXPORT_DIR}/' 폴더에 만듭니다. (메뉴 12)"
+        )
         self.btn_export.clicked.connect(self.on_export_md)
-        actions.addWidget(self.btn_export)
+        file_row.addWidget(self.btn_export)
+        file_row.addStretch(1)
+        right_layout.addLayout(file_row)
 
-        right_layout.addLayout(actions)
         splitter.addWidget(right)
 
         splitter.setStretchFactor(0, 2)
