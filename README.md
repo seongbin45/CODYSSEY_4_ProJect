@@ -137,6 +137,7 @@ python main.py
 | 2주차 · 영상 프롬프트 | https://github.com/seongbin45/CODYSSEY_2_ProJect | FinFit Veo 씬1 프롬프트 원문 |
 | 3주차 · 자동화 프롬프트 | https://github.com/seongbin45/Codyssey_3_ProJect | 지출 메모 자동 분류 시스템 프롬프트 원문 |
 | Git clone 실습 샘플 | https://github.com/seongbin45/Command-to-commit-changes-from-Git | 공개 저장소 `git clone` 연습용 |
+| CloneUp 실습 프로그램 | https://github.com/seongbin45/CloneUp | 공개 저장소 릴리스 탭, Window 프로그램 |
 | 이번 미션 (본 저장소) | https://github.com/seongbin45/CODYSSEY_4_ProJect | 프롬프트 관리 프로그램 |
 
 ---
