@@ -49,7 +49,23 @@ Python 3.10 이상이 필요합니다.
 
 ```
 CODYSSEY_4_ProJect/
-├── main.py
+├── app.py          # PyQt GUI (평가자 권장)
+├── main.py         # 콘솔 버전 + 공통 데이터
 ├── README.md
 └── .gitignore
 ```
+
+## GUI 실행 (평가자용 · 권장)
+
+VS Code에서 **`app.py` 만 실행**하면 PyQt 창이 열립니다.
+
+```bash
+python app.py
+```
+
+- PyQt5가 없으면 첫 실행 시 자동 설치를 시도합니다.
+- 수동 설치: `python -m pip install PyQt5`
+- 데이터·기본 프롬프트는 `main.py` 와 동일합니다.
+- 콘솔 버전: `python main.py`
+
+단축키: `Ctrl+N` 추가 · `Ctrl+S` JSON 저장 · `Ctrl+F` 검색 · `F5` 새로고침
