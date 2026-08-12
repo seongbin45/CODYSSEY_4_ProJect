@@ -53,3 +53,5 @@ CODYSSEY_4_ProJect/
 ├── README.md
 └── .gitignore
 ```
+
+<!-- pull 실습용 원격 변경 -->
