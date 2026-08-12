@@ -7,6 +7,9 @@ Python & Git 기초 미션 - Codyssey
 (메뉴 10~12: JSON 저장/불러오기, Markdown 내보내기 / 메뉴 8~9: 수정삭제·조회수 Top - 보너스)
 """
 
+import json
+import os
+
 CATEGORIES = ["텍스트 생성", "이미지 생성", "영상 생성", "페르소나", "자동화", "기타"]
 DATA_FILE = "prompts.json"
 EXPORT_DIR = "exports"
@@ -49,6 +52,11 @@ def show_menu():
     print("5. 프롬프트 상세 보기")
     print("6. 즐겨찾기 관리")
     print("7. 즐겨찾기 목록")
+    print("8. 프롬프트 수정/삭제")
+    print("9. 조회수 Top 목록")
+    print("10. JSON으로 저장")
+    print("11. JSON에서 불러오기")
+    print("12. 카테고리별 Markdown 내보내기")
     print("0. 종료")
 
 
@@ -194,6 +202,45 @@ def show_favorites():
     print(f"총 {len(favorites)}개의 즐겨찾기")
 
 
+def edit_or_delete_prompt():
+    print("\n=== 프롬프트 수정/삭제 ===")
+    show_list()
+    if not prompts:
+        return
+
+    idx = input("번호 입력: ").strip()
+    if not idx.isdigit() or not (1 <= int(idx) <= len(prompts)):
+        print("잘못된 번호입니다.")
+        return
+    p = prompts[int(idx) - 1]
+
+    action = input("1) 수정  2) 삭제  선택: ").strip()
+    if action == "1":
+        new_title = input(f"새 제목 (엔터 시 유지: {p['title']}): ").strip()
+        new_content = input("새 내용 (엔터 시 유지): ").strip()
+        if new_title:
+            p["title"] = new_title
+        if new_content:
+            p["content"] = new_content
+        print("수정되었습니다.")
+    elif action == "2":
+        removed = prompts.pop(int(idx) - 1)
+        print(f"'{removed['title']}' 프롬프트를 삭제했습니다.")
+    else:
+        print("잘못된 선택입니다.")
+
+
+def show_top_viewed():
+    print("\n=== 조회수 Top 목록 ===")
+    if not prompts:
+        print("등록된 프롬프트가 없습니다.")
+        return
+
+    ranked = sorted(prompts, key=lambda p: p["views"], reverse=True)
+    for i, p in enumerate(ranked, 1):
+        print(f"{i}. [{p['category']}] {p['title']} (조회수: {p['views']})")
+
+
 def main():
     while True:
         show_menu()
@@ -213,6 +260,16 @@ def main():
             toggle_favorite()
         elif choice == "7":
             show_favorites()
+        elif choice == "8":
+            edit_or_delete_prompt()
+        elif choice == "9":
+            show_top_viewed()
+        elif choice == "10":
+            save_to_json()
+        elif choice == "11":
+            load_from_json()
+        elif choice == "12":
+            export_to_markdown()
         elif choice == "0":
             print("프로그램을 종료합니다.")
             break
