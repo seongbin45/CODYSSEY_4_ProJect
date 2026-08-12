@@ -94,6 +94,18 @@ def add_prompt():
     print("프롬프트가 추가되었습니다!")
 
 
+def show_list():
+    print("\n=== 프롬프트 목록 ===")
+    if not prompts:
+        print("등록된 프롬프트가 없습니다.")
+        return
+
+    for i, p in enumerate(prompts, 1):
+        star = "★" if p["favorite"] else "☆"
+        print(f"{i}. [{p['category']}] {p['title']} {star}")
+    print(f"총 {len(prompts)}개의 프롬프트")
+
+
 def show_by_category():
     print("\n=== 카테고리별 조회 ===")
     category = choose_category()
@@ -130,13 +142,9 @@ def search_prompt():
 
 def show_detail():
     print("\n=== 프롬프트 상세 보기 ===")
+    show_list()
     if not prompts:
-        print("등록된 프롬프트가 없습니다.")
         return
-
-    for i, p in enumerate(prompts, 1):
-        star = "★" if p["favorite"] else "☆"
-        print(f"{i}. [{p['category']}] {p['title']} {star}")
 
     idx = input("번호 입력: ").strip()
     if not idx.isdigit() or not (1 <= int(idx) <= len(prompts)):
@@ -159,13 +167,9 @@ def show_detail():
 
 def toggle_favorite():
     print("\n=== 즐겨찾기 관리 ===")
+    show_list()
     if not prompts:
-        print("등록된 프롬프트가 없습니다.")
         return
-
-    for i, p in enumerate(prompts, 1):
-        star = "★" if p["favorite"] else "☆"
-        print(f"{i}. [{p['category']}] {p['title']} {star}")
 
     idx = input("프롬프트 번호 입력: ").strip()
     if not idx.isdigit() or not (1 <= int(idx) <= len(prompts)):
@@ -198,7 +202,7 @@ def main():
         if choice == "1":
             add_prompt()
         elif choice == "2":
-            print("목록 기능은 feature/show-list 브랜치에서 구현 예정입니다.")
+            show_list()
         elif choice == "3":
             show_by_category()
         elif choice == "4":
