@@ -78,5 +78,21 @@ def choose_category():
     return "기타"
 
 
+def add_prompt():
+    print("\n=== 프롬프트 추가 ===")
+    title = input_nonempty("제목: ")
+    content = input_nonempty("내용: ")
+    category = choose_category()
+
+    prompts.append({
+        "title": title,
+        "content": content,
+        "category": category,
+        "favorite": False,
+        "views": 0,
+    })
+    print("프롬프트가 추가되었습니다!")
+
+
 if __name__ == "__main__":
     show_menu()
