@@ -52,5 +52,31 @@ def show_menu():
     print("0. 종료")
 
 
+def input_nonempty(label):
+    while True:
+        value = input(label).strip()
+        if value:
+            return value
+        print("값을 비워둘 수 없습니다. 다시 입력해주세요.")
+
+
+def choose_category():
+    print("카테고리 선택:")
+    for i, c in enumerate(CATEGORIES, 1):
+        print(f"{i}) {c}")
+    print(f"{len(CATEGORIES) + 1}) 직접 입력")
+    choice = input("선택: ").strip()
+
+    if choice.isdigit():
+        idx = int(choice)
+        if 1 <= idx <= len(CATEGORIES):
+            return CATEGORIES[idx - 1]
+        if idx == len(CATEGORIES) + 1:
+            return input_nonempty("카테고리 직접 입력: ")
+
+    print("잘못된 선택입니다. '기타'로 등록됩니다.")
+    return "기타"
+
+
 if __name__ == "__main__":
     show_menu()
