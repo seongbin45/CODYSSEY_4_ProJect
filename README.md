@@ -52,6 +52,8 @@ CODYSSEY_4_ProJect/
 ├── app.py          # PyQt GUI (평가자 권장)
 ├── main.py         # 콘솔 버전 + 공통 데이터
 ├── README.md
+├── make_git_proof.py  # 증거 이미지 생성
+├── proof/            # Git 작업 증거 자료
 └── .gitignore
 ```
 
@@ -85,3 +87,23 @@ python app.py
 | Markdown 파일로 내보내기 | 카테고리별 .md | 12 |
 
 단축키: `Ctrl+N` 프롬프트 추가 · `Ctrl+S` JSON으로 저장 · `Ctrl+F` 검색창 · `F5` 목록 새로고침
+
+## Git 작업 증거 자료
+
+제출·평가용 터미널 재현 이미지와 명령 로그는 `proof/` 폴더에 있습니다.
+
+```bash
+python make_git_proof.py   # 증거 이미지/로그 다시 생성
+```
+
+| 파일 | 내용 |
+|---|---|
+| `proof/01_env_config.png` | 계정 이름·이메일·Python/Git 버전 |
+| `proof/02_init_add_commit_origin_push.png` | init / add / commit / origin / push |
+| `proof/03_feature_commits.png` | 기능 단위 커밋 |
+| `proof/04_checkout_merge.png` | checkout / merge |
+| `proof/05_clone.png` | clone |
+| `proof/06_pull.png` | pull |
+| `proof/07_final_verify.png` | 실측 remote·커밋 수 |
+| `proof/09_git_log_graph.png` | git log --graph |
+| `proof/git_command_log.md` | 명령 사용 기록 문서 |
