@@ -94,5 +94,20 @@ def add_prompt():
     print("프롬프트가 추가되었습니다!")
 
 
+def show_by_category():
+    print("\n=== 카테고리별 조회 ===")
+    category = choose_category()
+
+    filtered = [p for p in prompts if p["category"] == category]
+    print(f"\n[{category}] 카테고리 프롬프트:")
+    if not filtered:
+        print("해당 카테고리에 프롬프트가 없습니다.")
+        return
+
+    for i, p in enumerate(filtered, 1):
+        print(f"{i}. {p['title']}")
+    print(f"총 {len(filtered)}개의 프롬프트")
+
+
 if __name__ == "__main__":
     show_menu()
