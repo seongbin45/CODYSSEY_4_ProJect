@@ -121,13 +121,23 @@ python main.py
 
 프로그램 시작 시 **이전 미션에서 실제 사용한 프롬프트 원문** 3개가 미리 등록되어 있습니다.
 
-| # | 제목 | 카테고리 | 출처 |
+| # | 제목 | 카테고리 | 출처 저장소 · 파일 |
 |:---:|---|---|---|
-| 1 | 확인봇 - 창업지원 실무 이메일 코치 (1주차) | 페르소나 | CODYSSEY_1 `bot/prompts/system_prompt.md` |
-| 2 | FinFit 광고 씬1 - 문제 제시 (Veo, 2주차) | 영상 생성 | CODYSSEY_2 `Docs/video_prompts_model_variants.md` (Veo 3.1) |
-| 3 | 지출 메모 자동 분류 (Make/n8n, 3주차) | 자동화 | Codyssey_3 project1 n8n / Make OpenAI 시스템 프롬프트 |
+| 1 | 확인봇 - 창업지원 실무 이메일 코치 (1주차) | 페르소나 | [CODYSSEY_1_ProJect](https://github.com/seongbin45/CODYSSEY_1_ProJect) · `bot/prompts/system_prompt.md` |
+| 2 | FinFit 광고 씬1 - 문제 제시 (Veo, 2주차) | 영상 생성 | [CODYSSEY_2_ProJect](https://github.com/seongbin45/CODYSSEY_2_ProJect) · `Docs/video_prompts_model_variants.md` (Veo 3.1) |
+| 3 | 지출 메모 자동 분류 (Make/n8n, 3주차) | 자동화 | [Codyssey_3_ProJect](https://github.com/seongbin45/Codyssey_3_ProJect) · project1 n8n / Make OpenAI 시스템 프롬프트 |
 
 각 프롬프트는 제목, 내용, 카테고리, 즐겨찾기 여부, 조회수를 가집니다.
+
+### 참고한 저장소
+
+| 구분 | 저장소 | 이 프로젝트에서의 역할 |
+|---|---|---|
+| 1주차 · 페르소나 프롬프트 | https://github.com/seongbin45/CODYSSEY_1_ProJect | 확인봇 시스템 프롬프트 원문 |
+| 2주차 · 영상 프롬프트 | https://github.com/seongbin45/CODYSSEY_2_ProJect | FinFit Veo 씬1 프롬프트 원문 |
+| 3주차 · 자동화 프롬프트 | https://github.com/seongbin45/Codyssey_3_ProJect | 지출 메모 자동 분류 시스템 프롬프트 원문 |
+| Git clone 실습 샘플 | https://github.com/seongbin45/Command-to-commit-changes-from-Git | 공개 저장소 `git clone` 연습용 |
+| 이번 미션 (본 저장소) | https://github.com/seongbin45/CODYSSEY_4_ProJect | 프롬프트 관리 프로그램 |
 
 ---
 
@@ -194,6 +204,7 @@ git rev-list --count --merges HEAD # merge 커밋 존재 여부
 | `git clone` | 공개 샘플 저장소 내려받기 실습 |
 | `git pull` | 원격 변경 반영 |
 
+- **clone 실습 대상**: [Command-to-commit-changes-from-Git](https://github.com/seongbin45/Command-to-commit-changes-from-Git)  
 - **프롬프트 목록(`show_list`)** 기능은 `feature/show-list` 브랜치에서 작업 후 **main에 merge** 했습니다.  
 - 커밋은 기능 단위로 나뉘어 있으며, 그래프에 merge 분기가 보입니다.
 
