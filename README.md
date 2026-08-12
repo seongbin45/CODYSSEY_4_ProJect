@@ -197,22 +197,50 @@ git rev-list --count --merges HEAD # merge 커밋 존재 여부
 - **프롬프트 목록(`show_list`)** 기능은 `feature/show-list` 브랜치에서 작업 후 **main에 merge** 했습니다.  
 - 커밋은 기능 단위로 나뉘어 있으며, 그래프에 merge 분기가 보입니다.
 
-### 증거 자료 위치 (`proof/`)
+### 증거 자료 (`proof/` — README에 바로 표시)
 
-터미널 화면을 재현한 PNG와 명령 로그가 들어 있습니다.
+GitHub에서 이 README를 열면 아래 이미지가 본문에 보입니다.  
+문법: `![설명](proof/파일명.png)`
 
-| 파일 | 내용 |
-|---|---|
-| `01_env_config.png` | 사용자 이름·이메일, Python/Git 버전 |
-| `02_init_add_commit_origin_push.png` | init → add → commit → origin → push |
-| `03_feature_commits.png` | 기능 단위 커밋 |
-| `04_checkout_merge.png` | checkout / merge |
-| `05_clone.png` | clone |
-| `06_pull.png` | pull |
-| `07_final_verify.png` | 실측 remote·커밋 수·파일 목록 |
-| `08_checklist.png` | 요건 체크리스트 요약 |
-| `09_git_log_graph.png` | `git log --graph` |
-| `git_command_log.md` | 명령 사용 기록 (텍스트) |
+#### 01. 계정 · 환경 설정
+
+![Git 계정/환경 설정](proof/01_env_config.png)
+
+#### 02. init / add / commit / origin / push
+
+![init add commit origin push](proof/02_init_add_commit_origin_push.png)
+
+#### 03. 기능 단위 커밋
+
+![기능 단위 커밋](proof/03_feature_commits.png)
+
+#### 04. checkout / merge (feature/show-list)
+
+![checkout merge](proof/04_checkout_merge.png)
+
+#### 05. clone
+
+![git clone](proof/05_clone.png)
+
+#### 06. pull
+
+![git pull](proof/06_pull.png)
+
+#### 07. 최종 검증 (실측)
+
+![최종 검증](proof/07_final_verify.png)
+
+#### 08. 요건 체크리스트
+
+![체크리스트](proof/08_checklist.png)
+
+#### 09. git log --graph
+
+![git log graph](proof/09_git_log_graph.png)
+
+#### 텍스트 로그
+
+- 상세 명령 기록: [`proof/git_command_log.md`](proof/git_command_log.md)
 
 이미지를 다시 만들려면:
 
