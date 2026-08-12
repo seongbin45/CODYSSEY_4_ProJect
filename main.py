@@ -128,5 +128,34 @@ def search_prompt():
     print(f"{len(results)}개의 프롬프트를 찾았습니다.")
 
 
+def show_detail():
+    print("\n=== 프롬프트 상세 보기 ===")
+    if not prompts:
+        print("등록된 프롬프트가 없습니다.")
+        return
+
+    for i, p in enumerate(prompts, 1):
+        star = "★" if p["favorite"] else "☆"
+        print(f"{i}. [{p['category']}] {p['title']} {star}")
+
+    idx = input("번호 입력: ").strip()
+    if not idx.isdigit() or not (1 <= int(idx) <= len(prompts)):
+        print("잘못된 번호입니다.")
+        return
+
+    p = prompts[int(idx) - 1]
+    p["views"] += 1
+
+    star = "★" if p["favorite"] else "☆"
+    print("─" * 30)
+    print(f"제목: {p['title']}")
+    print(f"카테고리: {p['category']}")
+    print(f"즐겨찾기: {star}")
+    print("─" * 30)
+    print("내용:")
+    print(p["content"])
+    print("─" * 30)
+
+
 if __name__ == "__main__":
     show_menu()
