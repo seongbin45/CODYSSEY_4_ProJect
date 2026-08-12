@@ -241,6 +241,46 @@ def show_top_viewed():
         print(f"{i}. [{p['category']}] {p['title']} (조회수: {p['views']})")
 
 
+def save_to_json():
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(prompts, f, ensure_ascii=False, indent=2)
+    print(f"'{DATA_FILE}' 파일에 저장되었습니다.")
+
+
+def load_from_json():
+    if not os.path.exists(DATA_FILE):
+        print(f"'{DATA_FILE}' 파일이 없습니다.")
+        return
+
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        loaded = json.load(f)
+
+    prompts.clear()
+    prompts.extend(loaded)
+    print(f"'{DATA_FILE}' 파일에서 {len(prompts)}개의 프롬프트를 불러왔습니다.")
+
+
+def export_to_markdown():
+    if not prompts:
+        print("내보낼 프롬프트가 없습니다.")
+        return
+
+    os.makedirs(EXPORT_DIR, exist_ok=True)
+    by_category = {}
+    for p in prompts:
+        by_category.setdefault(p["category"], []).append(p)
+
+    for category, items in by_category.items():
+        filename = os.path.join(EXPORT_DIR, f"{category}.md")
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"# {category}\n\n")
+            for p in items:
+                star = "★" if p["favorite"] else "☆"
+                f.write(f"## {p['title']} {star}\n\n{p['content']}\n\n")
+
+    print(f"'{EXPORT_DIR}/' 폴더에 카테고리별 마크다운 파일로 내보냈습니다.")
+
+
 def main():
     while True:
         show_menu()
