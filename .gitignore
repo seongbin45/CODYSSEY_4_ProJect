@@ -26,3 +26,8 @@ _rebuild_stages/
 
 # Local assignment notes
 *.txt
+!requirements.txt
+
+# Proof helpers (local screenshots only)
+make_git_proof.py
+proof/
