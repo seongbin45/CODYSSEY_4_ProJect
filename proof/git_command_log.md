@@ -1,24 +1,27 @@
 # Git 명령 사용 기록 (제출 증명용)
 
-- 생성 시각: 2026-08-12 18:25:35
+- 생성 시각: 2026-08-13 14:59:36
 - 프로젝트: `C:\Users\seong\Downloads\CODYSSEY_4_ProJect`
 - GitHub: https://github.com/seongbin45/CODYSSEY_4_ProJect.git
 - user.name: `seongbin45`
 - user.email: `sungbin45@office365.kunsan.ac.kr`
-- 커밋 수: **22**
+- 커밋 수: **27**
 - merge 커밋 수: **1**
 
 ## 1. 계정 / 환경
 ```text
-git --version
-git version 2.53.0.windows.2
+python -V
+Python 3.10.11
 python --version
 Python 3.10.11
+git --version
+git version 2.53.0.windows.2
 git config --global user.name "seongbin45"
 git config --global user.email "sungbin45@office365.kunsan.ac.kr"
 git config --global init.defaultBranch main
 git config user.name  → seongbin45
 git config user.email → sungbin45@office365.kunsan.ac.kr
+snapshot: python=Python 3.10.11 | git=git version 2.53.0.windows.2 | user.name=seongbin45 | user.email=sungbin45@office365.kunsan.ac.kr
 ```
 
 ## 2. init / add / commit / origin / push
@@ -35,7 +38,12 @@ git push -u origin main
 
 ## 3. 기능 단위 커밋 (10개+)
 ```text
-* 7ce8968 (HEAD -> main, origin/main) ui: 버튼·안내 문구를 기능명과 1:1로 명확화 (초심자용)
+* d70bb27 (HEAD -> main, origin/main) 변경 사항 반영
+* 5a8093d docs: 참고 저장소 링크 추가 (CODYSSEY 1~3, clone 샘플)
+* 4964a9e docs: README에 proof 이미지를 Markdown 임베드 (![]())
+* 236b441 docs: 평가자용 README 전면 재작성 (빠른 시작·기능·Git 증거)
+* a3ab66c docs: Git 작업 증거 자료(proof/) 및 생성 스크립트 업로드
+* 7ce8968 ui: 버튼·안내 문구를 기능명과 1:1로 명확화 (초심자용)
 * dbf1786 변경 사항 반영
 * 20e36fe chore: requirements.txt 추가 (PyQt5) 및 gitignore 예외
 * 60de304 feat: PyQt GUI (app.py) — 평가자가 VS Code에서 바로 실행
@@ -90,19 +98,21 @@ Your branch is up to date with 'origin/main'.
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-	modified:   .gitignore
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	make_git_proof.py
-	proof/
+	modified:   README.md
+	modified:   main.py
+	modified:   make_git_proof.py
 
 no changes added to commit (use "git add" and/or "git commit -a")
 
-* main 7ce8968 [origin/main] ui: 버튼·안내 문구를 기능명과 1:1로 명확화 (초심자용)
+* main d70bb27 [origin/main] 변경 사항 반영
 
 git log --oneline --graph --decorate -20
-* 7ce8968 (HEAD -> main, origin/main) ui: 버튼·안내 문구를 기능명과 1:1로 명확화 (초심자용)
+* d70bb27 (HEAD -> main, origin/main) 변경 사항 반영
+* 5a8093d docs: 참고 저장소 링크 추가 (CODYSSEY 1~3, clone 샘플)
+* 4964a9e docs: README에 proof 이미지를 Markdown 임베드 (![]())
+* 236b441 docs: 평가자용 README 전면 재작성 (빠른 시작·기능·Git 증거)
+* a3ab66c docs: Git 작업 증거 자료(proof/) 및 생성 스크립트 업로드
+* 7ce8968 ui: 버튼·안내 문구를 기능명과 1:1로 명확화 (초심자용)
 * dbf1786 변경 사항 반영
 * 20e36fe chore: requirements.txt 추가 (PyQt5) 및 gitignore 예외
 * 60de304 feat: PyQt GUI (app.py) — 평가자가 VS Code에서 바로 실행
@@ -119,11 +129,6 @@ git log --oneline --graph --decorate -20
 * db764ac feat: main 함수에서 메뉴 분기 연결 (목록 제외)
 * c1166a3 feat: toggle_favorite, show_favorites 즐겨찾기 기능 구현
 * 0df0d7c feat: show_detail 상세 보기 기능 구현
-* 235bc33 feat: search_prompt 키워드 검색 기능 구현
-* effc516 feat: show_by_category 카테고리별 조회 기능 구현
-* 897c343 feat: add_prompt 프롬프트 추가 기능 구현
-* 196781e feat: input_nonempty, choose_category 입력 유틸 추가
-* b7a0ed2 feat: show_menu 메뉴 화면 구현
 ```
 
 ## 생성된 터미널 이미지

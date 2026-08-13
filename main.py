@@ -58,6 +58,7 @@ def show_menu():
     print("11. JSON에서 불러오기")
     print("12. 카테고리별 Markdown 내보내기")
     print("0. 종료")
+    print("(선택 가능 번호: 0 ~ 12)")
 
 
 def input_nonempty(label):

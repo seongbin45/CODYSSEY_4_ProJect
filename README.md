@@ -6,9 +6,12 @@
 | 항목 | 내용 |
 |---|---|
 | 저장소 | https://github.com/seongbin45/CODYSSEY_4_ProJect |
-| 언어 | Python 3.10 이상 |
+| 언어 | Python 3.10 이상 (`python -V` → Python 3.10.11) |
+| Git | 2.53.0 · `user.name=seongbin45` · `user.email=sungbin45@office365.kunsan.ac.kr` |
 | 필수 실행 | `main.py` (콘솔, 외부 라이브러리 없음) |
 | 평가자 권장 실행 | `app.py` (PyQt GUI, 클릭만으로 기능 확인) |
+| 브랜치 | `main` (목록 기능은 `feature/show-list` 에서 작업 후 merge) |
+| merge 커밋 | `0b62e68` — `merge: feature/show-list 브랜치 병합` |
 
 ---
 
@@ -174,24 +177,175 @@ CODYSSEY_4_ProJect/
 
 ---
 
-## 7. 구현 방식 (간단 설명)
+## 7. 설계 의도 · 자료구조 · 동작 규칙
 
-- **데이터**: 리스트 + 딕셔너리 (`prompts`)
-- **구조**: 기능별 함수 분리  
-  예) `show_menu`, `add_prompt`, `show_list`, `search_prompt`, `show_favorites` 등
-- **콘솔(`main.py`)**: 외부 라이브러리 없음 (`json`, `os` 만 보너스 기능에 사용)
-- **GUI(`app.py`)**: `main.py` 의 데이터·상수를 그대로 사용 (같은 기본 프롬프트)
+### 7.1 왜 리스트 + 딕셔너리인가 (선택 이유 · trade-off)
+
+| 선택 | 이유 |
+|---|---|
+| **리스트 (`prompts`)** | 등록 순서를 그대로 유지하고, 메뉴 번호(1, 2, 3…)과 1:1로 대응하기 쉽습니다. 삽입(`append`)·삭제(`pop`)가 직관적입니다. |
+| **딕셔너리 (각 항목)** | 한 프롬프트의 여러 속성(`title`, `content`, …)을 필드 이름으로 읽기 쉽습니다. |
+
+| 관점 | 장점 | 단점 (한계) |
+|---|---|---|
+| 삽입 | 맨 뒤 추가 O(1)에 가깝고 구현이 단순 | 중간 삽입은 느릴 수 있음 (이 프로그램에선 거의 없음) |
+| 검색 | 전체 순회 + 부분문자열로 충분 (데이터 수십~수백 건 가정) | 제목 인덱스가 없어 데이터가 매우 커지면 선형 탐색 비용 증가 |
+| 정렬 | `sorted(..., key=views)` 로 조회수 Top 구현 용이 | 정렬 시 새 리스트 생성 (원본 순서는 목록 번호용으로 유지) |
+| 대안 대비 | DB/클래스 없이 과제 범위(기본 문법)에 맞음 | 제목 유니크 제약·전문 검색 엔진 수준의 기능은 없음 |
+
+**정리**: 학습·제출용 규모에서는 리스트+딕셔너리가 **구현 비용 대비 가독성·메뉴 번호 매핑**에 가장 유리합니다.
+
+### 7.2 한 항목(필드) 사양
+
+| 필드 | 타입 | 설명 | 기본값 |
+|---|---|---|---|
+| `title` | `str` | 제목 (비어 있으면 등록 불가) | — |
+| `content` | `str` | 본문 (비어 있으면 등록 불가) | — |
+| `category` | `str` | 카테고리 이름 | 잘못된 선택 시 `"기타"` |
+| `favorite` | `bool` | 즐겨찾기 여부 | `False` |
+| `views` | `int` | 상세 보기 횟수 | `0` |
+
+### 7.3 동명(같은 제목) · 카테고리 충돌 규칙
+
+| 상황 | 정책 |
+|---|---|
+| **같은 제목 중복 등록** | **허용**. 제목을 고유키로 쓰지 않습니다. 구분 기준은 **목록 번호(리스트 인덱스 + 1)** 입니다. |
+| **같은 제목 + 다른 내용** | 둘 다 유지. 수정·삭제·즐겨찾기는 **번호로 지정한 항목**에만 적용됩니다. |
+| **카테고리 직접 입력** | 앞뒤 공백은 `strip()` 으로 제거. 비어 있으면 `input_nonempty` 가 다시 받습니다. |
+| **카테고리 목록 밖 값** | 직접 입력 문자열을 그대로 저장. 미리 정의된 6개와 **병합·자동 정규화하지 않음**. |
+| **잘못된 카테고리 번호** | 안내 후 카테고리를 `"기타"` 로 등록. |
+| **JSON 불러오기 시 충돌** | 파일 내용으로 **메모리 목록 전체를 교체** (`clear` 후 `extend`). 기존 항목과 제목 기준 병합은 하지 않습니다. |
+
+### 7.4 입력 검증 규칙
+
+| 입력 | 검증 |
+|---|---|
+| 제목 · 내용 | `input_nonempty`: 공백만 있으면 거부하고 재입력 |
+| 카테고리 (번호) | 1~6 → 고정 목록, 7 → 직접 입력, 그 외 → `"기타"` |
+| 카테고리 (직접 입력) | 비어 있으면 재입력 |
+| 메뉴 번호 | `0`~`12` 만 처리, 그 외 `"잘못된 번호입니다"` 후 메뉴 재표시 |
+| 목록 번호 (상세/즐겨찾기/수정삭제) | 숫자이며 1 ~ `len(prompts)` 범위인지 검사 |
+
+### 7.5 검색 방식
+
+- **부분 일치**: 키워드가 제목 **또는** 내용 문자열에 포함되면 매칭 (`in`).
+- **대소문자**: `.lower()` 로 비교해 영문 대/소문자를 구분하지 않습니다.
+- **공백·특수문자**: 별도 정규화(연속 공백 제거, 특수문자 무시)는 **하지 않습니다**. 입력한 그대로 부분 문자열 검색합니다.
+- **한계**: 완전 일치 옵션·정규식·형태소 분석은 없습니다.
+
+### 7.6 즐겨찾기 피드백 예시 (콘솔)
+
+```text
+'확인봇 - ...' 프롬프트를 즐겨찾기에서 추가했습니다!
+'확인봇 - ...' 프롬프트를 즐겨찾기에서 해제했습니다!
+```
+
+(`favorite` 를 `not` 으로 토글한 뒤, True → 「추가」, False → 「해제」 문구)
+
+### 7.7 프로그램 루프
+
+`main()` 은 `while True` 로 메뉴를 반복 출력합니다.  
+메뉴 **0** 을 고르면 종료 메시지를 출력하고 `break` 로 루프를 빠져나갑니다.  
+(한 번 실행 후 끝나지 않고, 여러 기능을 이어서 쓰기 위한 구조입니다.)
+
+### 7.8 주요 함수 책임 (한 줄)
+
+| 함수 | 책임 (입력 → 동작 / 부수효과) |
+|---|---|
+| `show_menu` | 메뉴 0~12 출력 (선택 범위 안내 포함) |
+| `input_nonempty` | 라벨 출력 → 비어 있지 않은 문자열 반환 |
+| `choose_category` | 번호/직접입력 → 카테고리 문자열 반환 |
+| `add_prompt` | 제목·내용·카테고리 입력 → `prompts` 에 append |
+| `show_list` | 전체 목록 출력 (★/☆) |
+| `show_by_category` | 카테고리 선택 → 해당 항목만 출력 |
+| `search_prompt` | 키워드 → 제목·내용 부분일치 결과 출력 |
+| `show_detail` | 번호 → 본문 출력, `views` +1 |
+| `toggle_favorite` | 번호 → `favorite` 토글 + 안내 문구 |
+| `show_favorites` | `favorite==True` 만 출력 |
+| `edit_or_delete_prompt` | 번호 → 수정 또는 삭제 |
+| `show_top_viewed` | `views` 내림차순 출력 |
+| `save_to_json` / `load_from_json` | 파일 저장 / 메모리 교체 복원 |
+| `export_to_markdown` | 카테고리별 `.md` 생성 |
+| `main` | 메뉴 루프와 분기 |
+
+### 7.9 JSON 스키마 · 영속화 방침
+
+`prompts.json` 은 **객체 배열** 입니다.
+
+```json
+[
+  {
+    "title": "문자열",
+    "content": "문자열",
+    "category": "문자열",
+    "favorite": true,
+    "views": 0
+  }
+]
+```
+
+| 정책 | 내용 |
+|---|---|
+| 스키마 버전 필드 | 별도 `version` 키 없음 (학습용 단순 형식) |
+| 불러오기 | 파일이 없거나 리스트가 아니면 오류 안내. 정상이면 **전체 교체** |
+| 필드 누락 | 코드는 키 접근 시 기본값을 쓰는 GUI 경로가 있고, 콘솔은 정상 저장본을 전제 |
+| 마이그레이션 | 구버전 변환 로직 없음. 수동으로 필드를 맞춘 뒤 불러오면 됨 |
+| Git 추적 | `prompts.json` 은 `.gitignore` — 실행 결과물이며 제출 코드에 포함하지 않음 |
+
+### 7.10 기술 스택 요약
+
+- **콘솔(`main.py`)**: 외부 라이브러리 없음 (`json`, `os` 는 보너스 영속화·내보내기)
+- **GUI(`app.py`)**: PyQt5, `main.py` 의 `prompts` 를 공유
+- **추가 시 유효성**: 제목/내용 필수 → 실패 시 재입력(콘솔) 또는 경고 후 다이얼로그 유지(GUI)
 
 ---
 
 ## 8. Git 작업 기록 (평가 포인트)
 
+### 환경 스냅샷 (실측)
+
+```text
+python -V
+Python 3.10.11
+
+git --version
+git version 2.53.0.windows.2
+
+git config user.name
+seongbin45
+
+git config user.email
+sungbin45@office365.kunsan.ac.kr
+```
+
+한 줄 요약: `python=Python 3.10.11 | git=2.53.0.windows.2 | user.name=seongbin45 | user.email=sungbin45@office365.kunsan.ac.kr`
+
 ### 확인 방법
 
 ```bash
+python -V
 git log --oneline --graph --decorate
 git rev-list --count HEAD          # 커밋 수 (10개 이상)
 git rev-list --count --merges HEAD # merge 커밋 존재 여부
+```
+
+### 브랜치 · merge 요약
+
+| 항목 | 값 |
+|---|---|
+| 기본 브랜치 | `main` |
+| 기능 브랜치 | `feature/show-list` (프롬프트 목록 기능 전용) |
+| merge 커밋 | **`0b62e68`** `merge: feature/show-list 브랜치 병합` |
+| 브랜치 기준 | **기능 단위**로 브랜치를 만들고, 동작 확인 후 `main` 에 `--no-ff` merge. 단순 문서/설정 수정은 `main` 에서 직접 커밋 |
+
+### 커밋 메시지 규칙 (예시)
+
+```text
+feat: 기능 추가          예) feat: show_list 프롬프트 목록 기능 구현
+feat(bonus): 보너스      예) feat(bonus): JSON 저장/불러오기
+fix: 문서               예) docs: README 평가자 안내
+chore: 설정·잡무         예) chore: 프로젝트 초기 설정
+merge: 브랜치 병합       예) merge: feature/show-list 브랜치 병합
 ```
 
 ### 사용한 Git 명령
@@ -206,8 +360,9 @@ git rev-list --count --merges HEAD # merge 커밋 존재 여부
 | `git pull` | 원격 변경 반영 |
 
 - **clone 실습 대상**: [Command-to-commit-changes-from-Git](https://github.com/seongbin45/Command-to-commit-changes-from-Git)  
+  (기록: `proof/05_clone.png`, `proof/git_command_log.md`)  
 - **프롬프트 목록(`show_list`)** 기능은 `feature/show-list` 브랜치에서 작업 후 **main에 merge** 했습니다.  
-- 커밋은 기능 단위로 나뉘어 있으며, 그래프에 merge 분기가 보입니다.
+- 커밋은 기능 단위로 나뉘어 있으며, 그래프에 merge 분기가 보입니다.  
 
 ### 증거 자료 (`proof/` — README에 바로 표시)
 
@@ -272,13 +427,23 @@ python make_git_proof.py
 | 콘솔 버전 | 추가 패키지 **없음** |
 | GUI 버전 | `PyQt5` (`requirements.txt`) |
 
-사용자 정보 확인 예:
+사용자 정보 확인 예 (원문 명령):
 
 ```bash
+python -V
 python --version
 git --version
 git config user.name
 git config user.email
+```
+
+실측 결과 예:
+
+```text
+python -V          → Python 3.10.11
+git --version      → git version 2.53.0.windows.2
+git config user.name  → seongbin45
+git config user.email → sungbin45@office365.kunsan.ac.kr
 ```
 
 ---

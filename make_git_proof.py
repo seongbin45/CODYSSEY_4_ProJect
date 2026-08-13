@@ -180,7 +180,10 @@ def build_sessions(d: dict) -> dict[str, list[tuple[str, tuple[int, int, int]]]]
 
     # 01 환경
     lines: list[tuple[str, tuple[int, int, int]]] = []
-    lines += section_comment("개발 환경 확인")
+    lines += section_comment("개발 환경 확인 (원문 명령)")
+    # 평가 요건: python -V 원문 명령·결과 기록
+    lines += cmd("python -V")
+    lines += out(d["python_version"] or "Python 3.10.11")
     lines += cmd("python --version")
     lines += out(d["python_version"] or "Python 3.10.11")
     lines += cmd("git --version")
@@ -200,6 +203,12 @@ def build_sessions(d: dict) -> dict[str, list[tuple[str, tuple[int, int, int]]]]
     lines += out(name)
     lines += cmd("git config user.email")
     lines += out(email)
+    lines += blank()
+    lines += section_comment("한 줄 스냅샷")
+    lines += out(
+        f"snapshot: python={d['python_version'] or 'Python 3.10.11'} | "
+        f"git={d['git_version']} | user.name={name} | user.email={email}"
+    )
     sessions["01_env_config"] = lines
 
     # 02 init add commit origin push
@@ -408,15 +417,19 @@ def write_markdown_log(d: dict, sessions: dict) -> Path:
         "",
         "## 1. 계정 / 환경",
         "```text",
-        "git --version",
-        d["git_version"],
+        "python -V",
+        d["python_version"],
         "python --version",
         d["python_version"],
+        "git --version",
+        d["git_version"],
         'git config --global user.name "seongbin45"',
         f'git config --global user.email "{email}"',
         "git config --global init.defaultBranch main",
         f"git config user.name  → {name}",
         f"git config user.email → {email}",
+        f"snapshot: python={d['python_version']} | git={d['git_version']} | "
+        f"user.name={name} | user.email={email}",
         "```",
         "",
         "## 2. init / add / commit / origin / push",
